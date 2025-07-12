@@ -87,50 +87,50 @@ export default function UsersPage() {
           {/* Users Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {users.map((user) => (
-          <div key={user.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="bg-blue-100 p-3 rounded-full">
-                <FaUser className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">{user.name}</h3>
-                <p className="text-sm text-gray-500">
-                  Member since {new Date(user.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <FaEnvelope className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-600">{user.email}</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <FaPhone className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-600">{user.phone}</span>
-              </div>
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
-                  <div className="flex items-center justify-center space-x-1">
-                    <FaShoppingCart className="h-4 w-4 text-blue-600" />
-                    <span className="text-lg font-semibold text-gray-900">{user.orderCount || 0}</span>
+              <div key={user.id} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="bg-blue-100 p-3 rounded-full">
+                    <FaUser className="h-6 w-6 text-blue-600" />
                   </div>
-                  <p className="text-xs text-gray-500">Orders</p>
-                </div>
-                <div className="text-center">
-                  <div className="flex items-center justify-center space-x-1">
-                    <FaDollarSign className="h-4 w-4 text-green-600" />
-                    <span className="text-lg font-semibold text-gray-900">{(user.totalSpent || 0).toFixed(2)}</span>
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">{user.name}</h3>
+                    <p className="text-sm text-gray-500">
+                      Member since {new Date(user.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-500">Total Spent</p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <FaEnvelope className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">{user.email}</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <FaPhone className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm text-gray-600">{user.phone}</span>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center space-x-1">
+                        <FaShoppingCart className="h-4 w-4 text-blue-600" />
+                        <span className="text-lg font-semibold text-gray-900">{user.orderCount || 0}</span>
+                      </div>
+                      <p className="text-xs text-gray-500">Orders</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center space-x-1">
+                        <FaDollarSign className="h-4 w-4 text-green-600" />
+                        <span className="text-lg font-semibold text-gray-900">{(user.totalSpent || 0).toFixed(2)}</span>
+                      </div>
+                      <p className="text-xs text-gray-500">Total Spent</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-            )}
+            ))}
           </div>
 
           {/* Empty State */}
