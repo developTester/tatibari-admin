@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { isAuthenticated } from '@/lib/auth';
-import { initializeMockData } from '@/data/mockData';
 import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
 import LoadingSpinner from '../ui/LoadingSpinner';
@@ -16,9 +15,6 @@ export default function LayoutWrapper({ children }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Initialize mock data
-    initializeMockData();
-
     // Check authentication
     const authenticated = isAuthenticated();
     setIsAuth(authenticated);

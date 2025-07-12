@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FaBell, FaEye, FaTrash, FaCheck } from 'react-icons/fa';
-import { getStorageData, setStorageData } from '@/lib/storage';
+import { api } from '@/lib/api';
 import { showToast } from '@/lib/toast';
 import Pagination from '@/components/ui/Pagination';
 import Button from '@/components/ui/Button';
@@ -11,101 +11,74 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [meta, setMeta] = useState({});
   const notificationsPerPage = 10;
 
   useEffect(() => {
     loadNotifications();
-  }, []);
+  }, [currentPage]);
 
-  const loadNotifications = () => {
+  const loadNotifications = async () => {
     setLoading(true);
     try {
-      // Get notifications from localStorage or create mock data
-      let notifications = getStorageData('tataibari_notifications');
+      const response = await api.notifications.getAll({
+        page: currentPage,
+        limit: notificationsPerPage
+      });
       
-      if (notifications.length === 0) {
-        // Create mock notifications
-        notifications = [
-          {
-            id: 1,
-            title: 'New Order Received',
-            message: 'Order #1001 has been placed by John Doe',
-            type: 'order',
-            read: false,
-            createdAt: new Date(Date.now() - 3600000).toISOString()
-          },
-          {
-            id: 2,
-            title: 'Low Stock Alert',
-            message: 'Wireless Mouse is running low on stock (5 units remaining)',
-            type: 'stock',
-            read: false,
-            createdAt: new Date(Date.now() - 7200000).toISOString()
-          },
-          {
-            id: 3,
-            title: 'Payment Received',
-            message: 'Payment for Order #1000 has been confirmed',
-            type: 'payment',
-            read: true,
-            createdAt: new Date(Date.now() - 10800000).toISOString()
-          },
-          {
-            id: 4,
-            title: 'New User Registration',
-            message: 'Jane Smith has registered as a new user',
-            type: 'user',
-            read: true,
-            createdAt: new Date(Date.now() - 14400000).toISOString()
-          },
-          {
-            id: 5,
-            title: 'Product Review',
-            message: 'Premium Laptop received a 5-star review',
-            type: 'review',
-            read: true,
-            createdAt: new Date(Date.now() - 18000000).toISOString()
-          }
-        ];
-        setStorageData('tataibari_notifications', notifications);
+      if (response.success) {
+        setNotifications(response.data);
+        setMeta(response.meta);
       }
-      
-      // Sort by created date (newest first)
-      notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setNotifications(notifications);
     } catch (error) {
+      console.error('Notifications loading error:', error);
       showToast.error('Failed to load notifications');
+      setNotifications([]);
+      setMeta({});
     } finally {
       setLoading(false);
     }
   };
 
-  const markAsRead = (id) => {
-    const updatedNotifications = notifications.map(notification =>
-      notification.id === id ? { ...notification, read: true } : notification
-    );
-    setNotifications(updatedNotifications);
-    setStorageData('tataibari_notifications', updatedNotifications);
-    showToast.success('Notification marked as read');
+  const markAsRead = async (id) => {
+    try {
+      const response = await api.notifications.markAsRead(id);
+      if (response.success) {
+        showToast.success('Notification marked as read');
+        loadNotifications();
+      }
+    } catch (error) {
+      console.error('Mark as read error:', error);
+      showToast.error('Failed to mark notification as read');
+    }
   };
 
-  const markAllAsRead = () => {
-    const updatedNotifications = notifications.map(notification => ({
-      ...notification,
-      read: true
-    }));
-    setNotifications(updatedNotifications);
-    setStorageData('tataibari_notifications', updatedNotifications);
-    showToast.success('All notifications marked as read');
+  const markAllAsRead = async () => {
+    try {
+      const response = await api.notifications.markAllAsRead();
+      if (response.success) {
+        showToast.success('All notifications marked as read');
+        loadNotifications();
+      }
+    } catch (error) {
+      console.error('Mark all as read error:', error);
+      showToast.error('Failed to mark all notifications as read');
+    }
   };
 
-  const deleteNotification = (id) => {
+  const deleteNotification = async (id) => {
     if (!confirm('Are you sure you want to delete this notification?')) return;
     
-    const updatedNotifications = notifications.filter(notification => notification.id !== id);
-    setNotifications(updatedNotifications);
-    setStorageData('tataibari_notifications', updatedNotifications);
-    showToast.success('Notification deleted');
+    try {
+      const response = await api.notifications.delete(id);
+      if (response.success) {
+        showToast.success('Notification deleted');
+        loadNotifications();
+      }
+    } catch (error) {
+      console.error('Notification deletion error:', error);
+      showToast.error('Failed to delete notification');
+    }
   };
 
   const getNotificationIcon = (type) => {
@@ -133,10 +106,7 @@ export default function NotificationsPage() {
   };
 
   // Pagination
-  const startIndex = (currentPage - 1) * notificationsPerPage;
-  const endIndex = startIndex + notificationsPerPage;
-  const currentNotifications = notifications.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(notifications.length / notificationsPerPage);
+  const totalPages = meta.last_page || 1;
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -166,7 +136,7 @@ export default function NotificationsPage() {
         ) : currentNotifications.length > 0 ? (
           <>
             <div className="divide-y divide-gray-200">
-              {currentNotifications.map((notification) => (
+              {notifications.map((notification) => (
                 <div
                   key={notification.id}
                   className={`p-6 hover:bg-gray-50 transition-colors ${
@@ -239,11 +209,7 @@ export default function NotificationsPage() {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
-                meta={{
-                  from: startIndex + 1,
-                  to: Math.min(endIndex, notifications.length),
-                  total: notifications.length
-                }}
+                meta={meta}
               />
             )}
           </>

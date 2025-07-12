@@ -45,10 +45,15 @@ export default function OrdersPage() {
         limit: 10
       });
       
-      setOrders(response.data);
-      setMeta(response.meta);
+      if (response.success) {
+        setOrders(response.data);
+        setMeta(response.meta);
+      }
     } catch (error) {
+      console.error('Orders loading error:', error);
       showToast.error('Failed to load orders');
+      setOrders([]);
+      setMeta({});
     } finally {
       setLoading(false);
     }
@@ -56,10 +61,13 @@ export default function OrdersPage() {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      await api.orders.updateStatus(orderId, newStatus);
-      showToast.success(`Order status updated to ${newStatus}`);
-      loadOrders();
+      const response = await api.orders.updateStatus(orderId, newStatus);
+      if (response.success) {
+        showToast.success(`Order status updated to ${newStatus}`);
+        loadOrders();
+      }
     } catch (error) {
+      console.error('Order status update error:', error);
       showToast.error('Failed to update order status');
     }
   };

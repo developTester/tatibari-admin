@@ -30,9 +30,13 @@ export default function CategoriesPage() {
     setLoading(true);
     try {
       const response = await api.categories.getAll();
-      setCategories(response.data);
+      if (response.success) {
+        setCategories(response.data);
+      }
     } catch (error) {
+      console.error('Categories loading error:', error);
       showToast.error('Failed to load categories');
+      setCategories([]);
     } finally {
       setLoading(false);
     }
@@ -68,10 +72,13 @@ export default function CategoriesPage() {
     if (!confirm('Are you sure you want to delete this category?')) return;
     
     try {
-      await api.categories.delete(categoryId);
-      showToast.success('Category deleted successfully');
-      loadCategories();
+      const response = await api.categories.delete(categoryId);
+      if (response.success) {
+        showToast.success('Category deleted successfully');
+        loadCategories();
+      }
     } catch (error) {
+      console.error('Category deletion error:', error);
       showToast.error('Failed to delete category');
     }
   };
@@ -81,16 +88,21 @@ export default function CategoriesPage() {
     
     try {
       if (editingCategory) {
-        await api.categories.update(editingCategory.id, formData);
-        showToast.success('Category updated successfully');
+        const response = await api.categories.update(editingCategory.id, formData);
+        if (response.success) {
+          showToast.success('Category updated successfully');
+        }
       } else {
-        await api.categories.create(formData);
-        showToast.success('Category created successfully');
+        const response = await api.categories.create(formData);
+        if (response.success) {
+          showToast.success('Category created successfully');
+        }
       }
 
       setShowAddEditModal(false);
       loadCategories();
     } catch (error) {
+      console.error('Category save error:', error);
       showToast.error(`Failed to ${editingCategory ? 'update' : 'create'} category`);
     }
   };

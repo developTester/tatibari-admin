@@ -38,10 +38,15 @@ export default function ProductsPage() {
         limit: 10
       });
       
-      setProducts(response.data);
-      setMeta(response.meta);
+      if (response.success) {
+        setProducts(response.data);
+        setMeta(response.meta);
+      }
     } catch (error) {
+      console.error('Products loading error:', error);
       showToast.error('Failed to load products');
+      setProducts([]);
+      setMeta({});
     } finally {
       setLoading(false);
     }
@@ -50,9 +55,13 @@ export default function ProductsPage() {
   const loadCategories = async () => {
     try {
       const response = await api.categories.getAll();
-      setCategories(response.data);
+      if (response.success) {
+        setCategories(response.data);
+      }
     } catch (error) {
+      console.error('Categories loading error:', error);
       showToast.error('Failed to load categories');
+      setCategories([]);
     }
   };
 
@@ -60,10 +69,13 @@ export default function ProductsPage() {
     if (!confirm('Are you sure you want to delete this product?')) return;
     
     try {
-      await api.products.delete(productId);
-      showToast.success('Product deleted successfully');
-      loadProducts();
+      const response = await api.products.delete(productId);
+      if (response.success) {
+        showToast.success('Product deleted successfully');
+        loadProducts();
+      }
     } catch (error) {
+      console.error('Product deletion error:', error);
       showToast.error('Failed to delete product');
     }
   };

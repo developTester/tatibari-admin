@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { FaBars, FaBell, FaUser, FaChevronDown } from 'react-icons/fa';
 import { getAuthData, logout } from '@/lib/auth';
-import { getStorageData } from '@/lib/storage';
+import { api } from '@/lib/api';
+import { showToast } from '@/lib/toast';
 import Link from 'next/link';
 
 export default function TopNavbar({ onMenuClick }) {
@@ -18,54 +19,31 @@ export default function TopNavbar({ onMenuClick }) {
       setUser(authData.user);
     }
 
-    // Get latest 3 notifications
     loadNotifications();
   }, []);
 
-  const loadNotifications = () => {
-    let notifications = getStorageData('tataibari_notifications');
-    
-    if (notifications.length === 0) {
-      // Create mock notifications if none exist
-      notifications = [
-        {
-          id: 1,
-          title: 'New Order Received',
-          message: 'Order #1001 has been placed',
-          type: 'order',
-          read: false,
-          createdAt: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-          id: 2,
-          title: 'Low Stock Alert',
-          message: 'Wireless Mouse is running low',
-          type: 'stock',
-          read: false,
-          createdAt: new Date(Date.now() - 7200000).toISOString()
-        },
-        {
-          id: 3,
-          title: 'Payment Received',
-          message: 'Payment confirmed for Order #1000',
-          type: 'payment',
-          read: true,
-          createdAt: new Date(Date.now() - 10800000).toISOString()
-        }
-      ];
+  const loadNotifications = async () => {
+    try {
+      const response = await api.notifications.getLatest(3);
+      if (response.success) {
+        setNotifications(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+      // Set empty array on error to avoid UI issues
+      setNotifications([]);
     }
-    
-    // Get latest 3 notifications
-    const latestNotifications = notifications
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 3);
-    
-    setNotifications(latestNotifications);
   };
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = '/admin/login';
+  const handleLogout = async () => {
+    try {
+      await logout();
+      showToast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      window.location.href = '/admin/login';
+    }
   };
 
   const formatTime = (timestamp) => {

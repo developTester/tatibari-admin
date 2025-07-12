@@ -33,9 +33,13 @@ export default function AddProductPage() {
   const loadCategories = async () => {
     try {
       const response = await api.categories.getAll();
-      setCategories(response.data);
+      if (response.success) {
+        setCategories(response.data);
+      }
     } catch (error) {
+      console.error('Categories loading error:', error);
       showToast.error('Failed to load categories');
+      setCategories([]);
     }
   };
 
@@ -50,10 +54,13 @@ export default function AddProductPage() {
         stock: parseInt(formData.stock)
       };
 
-      await api.products.create(productData);
-      showToast.success('Product created successfully');
-      router.push('/admin/products');
+      const response = await api.products.create(productData);
+      if (response.success) {
+        showToast.success('Product created successfully');
+        router.push('/admin/products');
+      }
     } catch (error) {
+      console.error('Product creation error:', error);
       showToast.error('Failed to create product');
     } finally {
       setLoading(false);

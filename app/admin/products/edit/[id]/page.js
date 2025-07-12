@@ -39,30 +39,36 @@ export default function EditProductPage() {
   const loadCategories = async () => {
     try {
       const response = await api.categories.getAll();
-      setCategories(response.data);
+      if (response.success) {
+        setCategories(response.data);
+      }
     } catch (error) {
+      console.error('Categories loading error:', error);
       showToast.error('Failed to load categories');
+      setCategories([]);
     }
   };
 
-  const loadProduct = () => {
-    const products = getStorageData('tataibari_products');
-    const foundProduct = products.find(p => p.id === parseInt(productId));
-    
-    if (foundProduct) {
-      setProduct(foundProduct);
-      setFormData({
-        name: foundProduct.name || '',
-        description: foundProduct.description || '',
-        price: foundProduct.price?.toString() || '',
-        stock: foundProduct.stock?.toString() || '',
-        category: foundProduct.category || '',
-        image: foundProduct.image || '',
-        metaTitle: foundProduct.metaTitle || '',
-        metaDescription: foundProduct.metaDescription || '',
-        metaKeywords: foundProduct.metaKeywords || ''
-      });
-    } else {
+  const loadProduct = async () => {
+    try {
+      const response = await api.products.getById(productId);
+      if (response.success) {
+        const foundProduct = response.data;
+        setProduct(foundProduct);
+        setFormData({
+          name: foundProduct.name || '',
+          description: foundProduct.description || '',
+          price: foundProduct.price?.toString() || '',
+          stock: foundProduct.stock?.toString() || '',
+          category: foundProduct.category || '',
+          image: foundProduct.image || '',
+          metaTitle: foundProduct.metaTitle || '',
+          metaDescription: foundProduct.metaDescription || '',
+          metaKeywords: foundProduct.metaKeywords || ''
+        });
+      }
+    } catch (error) {
+      console.error('Product loading error:', error);
       showToast.error('Product not found');
       router.push('/admin/products');
     }
@@ -79,10 +85,13 @@ export default function EditProductPage() {
         stock: parseInt(formData.stock)
       };
 
-      await api.products.update(productId, productData);
-      showToast.success('Product updated successfully');
-      router.push('/admin/products');
+      const response = await api.products.update(productId, productData);
+      if (response.success) {
+        showToast.success('Product updated successfully');
+        router.push('/admin/products');
+      }
     } catch (error) {
+      console.error('Product update error:', error);
       showToast.error('Failed to update product');
     } finally {
       setLoading(false);

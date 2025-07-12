@@ -3,16 +3,9 @@
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { FaShoppingCart, FaDollarSign, FaClock, FaEye } from 'react-icons/fa';
-import { getStorageData } from '@/lib/storage';
+import { api } from '@/lib/api';
+import { showToast } from '@/lib/toast';
 
-const salesData = [
-  { name: 'Jan', sales: 4000 },
-  { name: 'Feb', sales: 3000 },
-  { name: 'Mar', sales: 5000 },
-  { name: 'Apr', sales: 4500 },
-  { name: 'May', sales: 6000 },
-  { name: 'Jun', sales: 5500 },
-];
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
@@ -23,29 +16,62 @@ export default function DashboardPage() {
   });
   const [recentOrders, setRecentOrders] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
+  const [salesData, setSalesData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const orders = getStorageData('tataibari_orders');
-    const products = getStorageData('tataibari_products');
-
-    // Calculate stats
-    const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
-    const pendingOrders = orders.filter(order => order.status === 'pending').length;
-
-    setStats({
-      totalOrders: orders.length,
-      totalRevenue,
-      pendingOrders,
-      totalProducts: products.length
-    });
-
-    // Get recent orders
-    setRecentOrders(orders.slice(-5).reverse());
-
-    // Get top products (mock data for demo)
-    setTopProducts(products.slice(0, 5));
+    loadDashboardData();
   }, []);
 
+  const loadDashboardData = async () => {
+    setLoading(true);
+    try {
+      // Load dashboard statistics
+      const statsResponse = await api.analytics.getDashboardStats();
+      if (statsResponse.success) {
+        setStats(statsResponse.data);
+      }
+
+      // Load recent orders
+      const ordersResponse = await api.orders.getAll({ limit: 5 });
+      if (ordersResponse.success) {
+        setRecentOrders(ordersResponse.data);
+      }
+
+      // Load top products
+      const productsResponse = await api.products.getAll({ limit: 5 });
+      if (productsResponse.success) {
+        setTopProducts(productsResponse.data);
+      }
+
+      // Load sales data
+      const salesResponse = await api.analytics.getSalesData({ period: 'month' });
+      if (salesResponse.success) {
+        setSalesData(salesResponse.data);
+      }
+    } catch (error) {
+      console.error('Dashboard data error:', error);
+      showToast.error('Failed to load dashboard data');
+      
+      // Fallback to default data if API fails
+      setStats({
+        totalOrders: 0,
+        totalRevenue: 0,
+        pendingOrders: 0,
+        totalProducts: 0
+      });
+      setSalesData([
+        { name: 'Jan', sales: 4000 },
+        { name: 'Feb', sales: 3000 },
+        { name: 'Mar', sales: 5000 },
+        { name: 'Apr', sales: 4500 },
+        { name: 'May', sales: 6000 },
+        { name: 'Jun', sales: 5500 },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
   const StatCard = ({ title, value, icon: Icon, color = 'blue' }) => {
     const colorClasses = {
       blue: 'bg-blue-500',
@@ -78,6 +104,12 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : (
+        <>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -88,7 +120,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Total Revenue"
-          value={`$${stats.totalRevenue.toFixed(2)}`}
+          value={`$${(stats.totalRevenue || 0).toFixed(2)}`}
           icon={FaDollarSign}
           color="green"
         />
@@ -206,6 +238,8 @@ export default function DashboardPage() {
           </table>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

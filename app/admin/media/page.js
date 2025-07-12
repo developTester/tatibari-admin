@@ -26,10 +26,15 @@ export default function MediaPage() {
     setLoading(true);
     try {
       const response = await api.media.getAll(selectedFolder);
-      setMedia(response.data);
-      setFolders(response.folders);
+      if (response.success) {
+        setMedia(response.data);
+        setFolders(response.folders || []);
+      }
     } catch (error) {
+      console.error('Media loading error:', error);
       showToast.error('Failed to load media');
+      setMedia([]);
+      setFolders([]);
     } finally {
       setLoading(false);
     }
@@ -43,12 +48,16 @@ export default function MediaPage() {
     try {
       for (const file of files) {
         if (file.type.startsWith('image/')) {
-          await api.media.upload(file, selectedFolder || 'uploads');
+          const response = await api.media.upload(file, selectedFolder || 'uploads');
+          if (!response.success) {
+            throw new Error('Upload failed');
+          }
         }
       }
       showToast.success(`${files.length} file(s) uploaded successfully`);
       loadMedia();
     } catch (error) {
+      console.error('File upload error:', error);
       showToast.error('Failed to upload files');
     } finally {
       setUploading(false);
@@ -59,12 +68,15 @@ export default function MediaPage() {
     if (!newName.trim()) return;
     
     try {
-      await api.media.rename(id, newName);
-      showToast.success('File renamed successfully');
-      setEditingItem(null);
-      setNewName('');
-      loadMedia();
+      const response = await api.media.rename(id, newName);
+      if (response.success) {
+        showToast.success('File renamed successfully');
+        setEditingItem(null);
+        setNewName('');
+        loadMedia();
+      }
     } catch (error) {
+      console.error('File rename error:', error);
       showToast.error('Failed to rename file');
     }
   };
@@ -73,10 +85,13 @@ export default function MediaPage() {
     if (!confirm('Are you sure you want to delete this file?')) return;
     
     try {
-      await api.media.delete(id);
-      showToast.success('File deleted successfully');
-      loadMedia();
+      const response = await api.media.delete(id);
+      if (response.success) {
+        showToast.success('File deleted successfully');
+        loadMedia();
+      }
     } catch (error) {
+      console.error('File deletion error:', error);
       showToast.error('Failed to delete file');
     }
   };

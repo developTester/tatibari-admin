@@ -27,8 +27,13 @@ function SidebarContent({ onClose }) {
   const pathname = usePathname();
 
   const handleLogout = () => {
-    logout();
-    window.location.href = '/admin/login';
+    logout().then(() => {
+      window.location.href = '/admin/login';
+    }).catch((error) => {
+      console.error('Logout error:', error);
+      // Force logout even if API call fails
+      window.location.href = '/admin/login';
+    });
   };
 
   return (

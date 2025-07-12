@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { login } from '@/lib/auth';
+import { showToast } from '@/lib/toast';
 import Button from '@/components/ui/Button';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
-    email: 'admin@tataibari.com',
-    password: 'admin123'
+    email: '',
+    password: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,14 +21,16 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const result = login(formData);
+      const result = await login(formData);
       if (result.success) {
+        showToast.success('Login successful!');
         router.push('/admin/dashboard');
       } else {
         setError(result.error);
       }
     } catch (err) {
-      setError('Login failed. Please try again.');
+      setError('Network error. Please check your connection and try again.');
+      showToast.error('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -103,9 +106,7 @@ export default function LoginPage() {
           </div>
 
           <div className="text-sm text-gray-600 text-center">
-            <p>Demo credentials:</p>
-            <p><strong>Email:</strong> admin@tataibari.com</p>
-            <p><strong>Password:</strong> admin123</p>
+            <p>Enter your admin credentials to access the dashboard</p>
           </div>
         </form>
       </div>

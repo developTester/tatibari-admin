@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { FaSave, FaStore, FaEnvelope, FaPhone, FaQrcode, FaTruck, FaCog } from 'react-icons/fa';
-import { getStorageData } from '@/lib/storage';
+import { api } from '@/lib/api';
+import { showToast } from '@/lib/toast';
 import Button from '@/components/ui/Button';
 
 export default function SettingsPage() {
@@ -18,15 +19,24 @@ export default function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
     loadSettings();
   }, []);
 
-  const loadSettings = () => {
-    const settingsData = getStorageData('tataibari_settings');
-    if (settingsData && Object.keys(settingsData).length > 0) {
-      setSettings({ ...settings, ...settingsData });
+  const loadSettings = async () => {
+    setInitialLoading(true);
+    try {
+      const response = await api.settings.getAll();
+      if (response.success) {
+        setSettings({ ...settings, ...response.data });
+      }
+    } catch (error) {
+      console.error('Settings loading error:', error);
+      showToast.error('Failed to load settings');
+    } finally {
+      setInitialLoading(false);
     }
   };
 
@@ -35,10 +45,13 @@ export default function SettingsPage() {
     setLoading(true);
 
     try {
-      localStorage.setItem('tataibari_settings', JSON.stringify(settings));
-      alert('Settings saved successfully!');
+      const response = await api.settings.update(settings);
+      if (response.success) {
+        showToast.success('Settings saved successfully!');
+      }
     } catch (error) {
-      alert('Error saving settings. Please try again.');
+      console.error('Settings save error:', error);
+      showToast.error('Failed to save settings. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -68,6 +81,11 @@ export default function SettingsPage() {
         </p>
       </div>
 
+      {initialLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         {/* Tabs */}
         <div className="border-b border-gray-200">
@@ -276,6 +294,7 @@ export default function SettingsPage() {
           </div>
         </form>
       </div>
+      )}
     </div>
   );
 }
